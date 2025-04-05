@@ -1,159 +1,104 @@
-document.addEventListener('DOMContentLoaded', function() {
-  const plannerContainer = document.getElementById('plannerContainer');
-  const currentDayEl = document.getElementById('currentDay');
-  const datePicker = document.getElementById('datePicker');
-
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  datePicker.value = todayStr; // set default to today
-
-  // Update header date text
-  function updateHeader(dateStr) {
-    const dateObj = new Date(dateStr);
-    const options = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-    currentDayEl.textContent = dateObj.toLocaleDateString(undefined, options);
+const products = [
+    { id: 1, name: "Smartphone", price: 499, category: "electronics", img: "smart.jpg" },
+    { id: 2, name: "T-Shirt", price: 19, category: "fashion", img: "shirt.jpg" },
+    { id: 3, name: "Novel Book", price: 12, category: "books", img: "harry.jpg" },
+    { id: 4, name: "Headphones", price: 89, category: "electronics", img: "head.jpg" },
+    { id: 5, name: "Sneakers", price: 49, category: "fashion", img: "sneak.jpg" }
+  ];
+  
+  const productList = document.getElementById("product-list");
+  const searchInput = document.getElementById("search");
+  const categoryFilter = document.getElementById("category-filter");
+  const cartCount = document.getElementById("cart-count");
+  const toggleThemeBtn = document.getElementById("toggle-theme");
+  
+  const cartIcon = document.getElementById("cart-icon");
+  const cartModal = document.getElementById("cart-modal");
+  const closeCart = document.getElementById("close-cart");
+  const cartItemsContainer = document.getElementById("cart-items");
+  const cartTotal = document.getElementById("cart-total");
+  const orderButton = document.getElementById("order-button");
+  const orderSuccess = document.getElementById("order-success");
+  
+  let cart = [];
+  
+  function displayProducts(items) {
+    productList.innerHTML = "";
+    items.forEach(product => {
+      const card = document.createElement("div");
+      card.className = "product";
+      card.innerHTML = `
+        <img src="${product.img}" alt="${product.name}">
+        <h3>${product.name}</h3>
+        <p>$${product.price}</p>
+        <button class="add-to-cart" onclick="addToCart(${product.id})">Add to Cart</button>
+      `;
+      productList.appendChild(card);
+    });
   }
-
-  updateHeader(todayStr);
-
-  // Generate planner for the selected date
-  function generatePlanner(selectedDateStr) {
-    // Clear existing planner cards
-    plannerContainer.innerHTML = '';
-
-    // Determine color coding based on date comparison:
-    // if selected date === today, use current hour; if before today, all are past; if after, all are future.
-    let selectedDate = new Date(selectedDateStr);
-    let comparison;
-    const currentDateStr = todayStr;
-    if (selectedDateStr === currentDateStr) {
-      comparison = 'today';
-    } else if (selectedDateStr < currentDateStr) {
-      comparison = 'past';
+  
+  function addToCart(productId) {
+    const item = cart.find(p => p.id === productId);
+    if (item) {
+      item.quantity++;
     } else {
-      comparison = 'future';
+      const product = products.find(p => p.id === productId);
+      cart.push({ ...product, quantity: 1 });
     }
-    
-    // If today, get current hour; otherwise, set a dummy hour (0 for past, 23 for future)
-    let currentHour = comparison === 'today' ? new Date().getHours() : (comparison === 'past' ? 24 : -1);
-
-    // Create 24 cards (hours 0 to 23)
-    for (let hour = 0; hour < 24; hour++) {
-      // Create card element
-      const card = document.createElement('div');
-      card.classList.add('card');
-      card.setAttribute('data-hour', hour);
-
-      // Determine card color class based on comparison:
-      if (comparison === 'today') {
-        if (hour < currentHour) {
-          card.classList.add('past');
-        } else if (hour === currentHour) {
-          card.classList.add('present');
-        } else {
-          card.classList.add('future');
-        }
-      } else if (comparison === 'past') {
-        card.classList.add('past');
-      } else if (comparison === 'future') {
-        card.classList.add('future');
-      }
-
-      // Card header with hour label in 12h format
-      const cardHeader = document.createElement('div');
-      cardHeader.classList.add('card-header');
-      let hourLabel;
-      if (hour === 0) {
-        hourLabel = '12 AM';
-      } else if (hour < 12) {
-        hourLabel = hour + ' AM';
-      } else if (hour === 12) {
-        hourLabel = '12 PM';
-      } else {
-        hourLabel = (hour - 12) + ' PM';
-      }
-      const cardTitle = document.createElement('h2');
-      cardTitle.classList.add('card-title');
-      cardTitle.textContent = hourLabel;
-      cardHeader.appendChild(cardTitle);
-      card.appendChild(cardHeader);
-
-      // Task input row
-      const taskInputDiv = document.createElement('div');
-      taskInputDiv.classList.add('task-input');
-
-      const taskInput = document.createElement('input');
-      taskInput.type = 'text';
-      taskInput.placeholder = 'Add a new task...';
-
-      const addBtn = document.createElement('button');
-      addBtn.textContent = 'Add';
-
-      taskInputDiv.appendChild(taskInput);
-      taskInputDiv.appendChild(addBtn);
-      card.appendChild(taskInputDiv);
-
-      // Task list container
-      const taskList = document.createElement('ul');
-      taskList.classList.add('task-list');
-      card.appendChild(taskList);
-
-      // Construct a unique key for localStorage for this date and hour
-      const storageKey = `tasks-${selectedDateStr}-${hour}`;
-      const savedData = localStorage.getItem(storageKey);
-      let tasks = savedData ? JSON.parse(savedData) : [];
-
-      // Function to render tasks for this hour
-      function renderTasks() {
-        taskList.innerHTML = '';
-        tasks.forEach((task, index) => {
-          const li = document.createElement('li');
-          li.classList.add('task-item');
-
-          const span = document.createElement('span');
-          span.classList.add('task-text');
-          span.textContent = task;
-
-          const deleteBtn = document.createElement('button');
-          deleteBtn.classList.add('deleteBtn');
-          deleteBtn.textContent = 'Delete';
-          deleteBtn.addEventListener('click', () => {
-            tasks.splice(index, 1);
-            localStorage.setItem(storageKey, JSON.stringify(tasks));
-            renderTasks();
-          });
-
-          li.appendChild(span);
-          li.appendChild(deleteBtn);
-          taskList.appendChild(li);
-        });
-      }
-      renderTasks();
-
-      // Add new task event
-      addBtn.addEventListener('click', () => {
-        const newTask = taskInput.value.trim();
-        if (newTask) {
-          tasks.push(newTask);
-          localStorage.setItem(storageKey, JSON.stringify(tasks));
-          renderTasks();
-          taskInput.value = '';
-        }
-      });
-
-      // Append card to container
-      plannerContainer.appendChild(card);
-    }
+    updateCartUI();
   }
-
-  // Generate planner for default selected date (today)
-  generatePlanner(todayStr);
-
-  // When user changes date via date picker, update header and re-generate planner
-  datePicker.addEventListener('change', function() {
-    const selectedDateStr = this.value;
-    updateHeader(selectedDateStr);
-    generatePlanner(selectedDateStr);
+  
+  function updateCartUI() {
+    cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+  }
+  
+  function renderCartModal() {
+    cartItemsContainer.innerHTML = "";
+    let total = 0;
+    cart.forEach(item => {
+      total += item.price * item.quantity;
+      const div = document.createElement("div");
+      div.textContent = `${item.name} x${item.quantity} - $${item.price * item.quantity}`;
+      cartItemsContainer.appendChild(div);
+    });
+    cartTotal.textContent = total.toFixed(2);
+    orderSuccess.classList.add("hidden");
+  }
+  
+  function filterProducts() {
+    const search = searchInput.value.toLowerCase();
+    const category = categoryFilter.value;
+    const filtered = products.filter(p =>
+      p.name.toLowerCase().includes(search) &&
+      (category === "all" || p.category === category)
+    );
+    displayProducts(filtered);
+  }
+  
+  searchInput.addEventListener("input", filterProducts);
+  categoryFilter.addEventListener("change", filterProducts);
+  
+  toggleThemeBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    toggleThemeBtn.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
   });
-});
+  
+  cartIcon.addEventListener("click", () => {
+    renderCartModal();
+    cartModal.classList.remove("hidden");
+  });
+  
+  closeCart.addEventListener("click", () => {
+    cartModal.classList.add("hidden");
+  });
+  
+  orderButton.addEventListener("click", () => {
+    if (cart.length === 0) return;
+    cart = [];
+    updateCartUI();
+    renderCartModal();
+    orderSuccess.classList.remove("hidden");
+  });
+  
+  displayProducts(products);
+  

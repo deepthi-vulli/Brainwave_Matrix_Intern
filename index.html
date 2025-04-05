@@ -2,25 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>24 Hour Day Planner</title>
-  <!-- Google Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My E-Commerce Store</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>24 Hour Day Planner</h1>
-    <div class="date-picker-container">
-      <label for="datePicker">Select Day: </label>
-      <input type="date" id="datePicker">
+    <h1>My E-Commerce Store</h1>
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search products...">
+      <select id="category-filter">
+        <option value="all">All Categories</option>
+        <option value="electronics">Electronics</option>
+        <option value="fashion">Fashion</option>
+        <option value="books">Books</option>
+      </select>
+      <button id="toggle-theme">🌙</button>
+      <div id="cart-icon">🛒 <span id="cart-count">0</span></div>
     </div>
-    <p id="currentDay"></p>
   </header>
 
-  <div class="container" id="plannerContainer">
-    <!-- Hour cards will be generated dynamically here -->
+  <main id="product-list"></main>
+<!-- Cart Modal -->
+<div id="cart-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn" id="close-cart">&times;</span>
+      <h2>Your Cart</h2>
+      <div id="cart-items"></div>
+      <p>Total: $<span id="cart-total">0</span></p>
+      <button id="order-button">Place Order</button>
+      <p id="order-success" class="hidden">✅ Order placed successfully!</p>
+    </div>
   </div>
+  
+  <footer>
+    <p>&copy; 2025 My E-Commerce Store</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
